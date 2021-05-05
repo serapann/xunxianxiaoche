@@ -1,0 +1,195 @@
+#include <ArduinoJson.h>
+#include <SoftwareSerial.h>
+SoftwareSerial softSerial(10,11); //定义软串口,rx为10号端口,tx为11号端口
+volatile int x;
+volatile char c;
+String json;
+
+int sensor_pin[3] = {A0,A1};
+int sensor_value = 0;
+int sensor_value1 = 0;
+int sensor_value2 = 0;
+int input1 = 2;  //定义输出引脚
+int input2 = 3; //定义输出引脚
+int input3 = 4; //定义输出引脚
+int input4 = 5; //定义输出引脚
+int input5 = 6; //定义输出引脚
+int input6 = 7; //定义输出引脚
+//int ENA=5;//定义使能端引脚(下同）
+//int ENB=11;
+void stop1();
+void left();
+void right();
+void stop1();
+void head();
+void sekuai();
+
+
+void setup()
+{
+  x = 0;
+  c = 0;
+  json = "";
+  pinMode(input1,OUTPUT);//下列配置各引脚为输出模式
+  pinMode(input2,OUTPUT);
+  pinMode(input3,OUTPUT);
+  pinMode(input4,OUTPUT);
+  pinMode(input5,OUTPUT);
+  pinMode(input6,OUTPUT);
+  Serial.begin(9600); //初始化硬串口
+  softSerial.begin(9600); //初始化虚拟串口
+  sensor_value = analogRead(sensor_pin[0]);
+  sensor_value1 = analogRead(sensor_pin[1]);
+  
+}
+
+void loop()
+{
+  sensor_value = analogRead(sensor_pin[0]);
+  sensor_value1 = analogRead(sensor_pin[1]);
+  
+  
+  
+     //Serial.println("1");
+      
+    
+   
+       /*if(sensor_value>500)//坐标和阈值进行判断
+       {
+        //Serial.println("1");//串口打印数字1
+          //Serial.println(x);//串口打印坐标
+         stop1();
+         left();//左转
+        json = "";
+       }
+       else if(sensor_value1>500)
+       {
+         //Serial.println("2");//串口打印数字2
+          //Serial.println(x);//串口打印坐标
+          stop1();
+          right();//右转
+         json = "";
+       }*/
+       //else
+       {
+        
+        sekuai();
+        head();//直走
+       }
+    }
+  
+
+
+void right()   //右转
+{
+  //analogWrite(ENA,240);
+ 
+  digitalWrite(input1,HIGH); 
+  digitalWrite(input2,LOW);  
+  digitalWrite(input3,LOW); 
+  digitalWrite(input4,HIGH); 
+   delay(180);  
+}
+
+void right1()   //右转
+{
+  //analogWrite(ENA,240);
+ 
+  digitalWrite(input1,HIGH); 
+  digitalWrite(input2,LOW);  
+  digitalWrite(input3,LOW); 
+  digitalWrite(input4,LOW); 
+  analogWrite(input1,100); 
+  analogWrite(input2,0);  
+  analogWrite(input3,0); 
+  analogWrite(input4,0); 
+   
+}
+
+
+void head()//直走
+{
+ 
+  digitalWrite(input1,HIGH); 
+  digitalWrite(input2,LOW);  
+  digitalWrite(input3,HIGH); 
+  digitalWrite(input4,LOW);   
+  analogWrite(input1,220); 
+  analogWrite(input2,0);  
+  analogWrite(input3,235); 
+  analogWrite(input4,0); 
+}
+void stop1()//刹车
+{
+  digitalWrite(input1,HIGH); 
+  digitalWrite(input2,HIGH);  
+  digitalWrite(input3,HIGH); 
+  digitalWrite(input4,HIGH); 
+  delay(300);   
+}
+
+void left()//左转
+{
+ 
+ // analogWrite(ENB,240);
+  digitalWrite(input1,LOW); 
+  digitalWrite(input2,HIGH);  
+  digitalWrite(input3,HIGH); 
+  digitalWrite(input4,LOW);   
+  delay(180);
+}
+void left1()//左转
+{
+ 
+ // analogWrite(ENB,240);
+  digitalWrite(input1,LOW); 
+  digitalWrite(input2,LOW);  
+  digitalWrite(input3,HIGH); 
+  digitalWrite(input4,LOW); 
+  analogWrite(input1,0); 
+  analogWrite(input2,0);  
+  analogWrite(input3,100); 
+  analogWrite(input4,0); 
+}
+
+void sekuai()
+{
+  
+  //softSerial.flush();
+  if (softSerial.available() > 0) //判断软串口是否接收到openmv数据，然后读取，然后在串口监视器打印
+  {
+        c = char(softSerial.read());
+        json = String(json)+String(c);
+        if(c == '}')
+        {
+           DynamicJsonDocument doc(200);
+           deserializeJson(doc,json);
+           JsonObject obj = doc.as<JsonObject>();
+           int x = doc["x"];
+    
+           if(x!=0)
+           {
+               if(x>90)//坐标和阈值进行判断
+                   {
+                      //Serial.println("1");//串口打印数字1
+                      Serial.println(x);//串口打印坐标
+                      
+                     left();//左转
+                   }
+                   else if(x<60)
+                   {
+                      //Serial.println("2");//串口打印数字2
+                      Serial.println(x);//串口打印坐标
+                      
+                      right();//右转
+                   }
+                   else
+                   {
+                    head();//直走
+                   }
+           }
+           
+           json = "";
+        }
+    }
+}
